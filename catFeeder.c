@@ -18,6 +18,9 @@ static sqlite3 *db;
 
 static int timeElapsed;
 static int minFeedingInterval;
+static int LEFTGPIO = 18;
+static int RIGHTGPIO = 24;
+static string dispenseSide;
 
 /* Section to iterate through decimal data, convert to hex, and pretty print */
 static void
@@ -87,7 +90,6 @@ getIDstring(const uint8_t *pbtData, const size_t szBytes, char *inString)
     //		printf("%s\n", returnString);
   }
   //	printf("\nreturnString: %s\n", returnString);
-  //	snprintf(returnString, szBytes, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", pbtData);
   //	printf("%.30X", pbtData[0]);
 
   for(i = 0; i < strlen(returnString) + 1; i++){
@@ -224,6 +226,7 @@ main(int argc, const char *argv[])
         char* addToLog = sqlite3_mprintf("INSERT INTO log VALUES('%q', strftime('%s', 'now'))", uniqueID, "%s");
         //			printf("%s\n", addToLog);
         rc = sqlite3_exec(db, addToLog, callback, 0, &zErrMsg);
+        // ADD sqlite table for food and dispenser side. Reference table to determine side to dispense, and pin.
         system("pigs s 18 2500 mils 250 s 18 0");
       }
     }
