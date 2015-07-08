@@ -20,7 +20,7 @@ static int timeElapsed;
 static int minFeedingInterval;
 static int LEFTGPIO = 18;
 static int RIGHTGPIO = 24;
-static string dispenseSide;
+//static string dispenseSide;
 
 /* Section to iterate through decimal data, convert to hex, and pretty print */
 static void
@@ -118,7 +118,7 @@ main(int argc, const char *argv[])
   // Sqlite3 parameters and initialization
   char *zErrMsg = 0;
   int rc;
-  rc = sqlite3_open("catfeeder.db", &db);
+  rc = sqlite3_open("../catfeeder.db", &db);
   if ( rc ){
     fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
     sqlite3_close(db);
