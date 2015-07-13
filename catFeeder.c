@@ -34,6 +34,26 @@ print_hex(const uint8_t *pbtData, const size_t szBytes)
   printf("\n");
 }
 
+static int
+dispense(void *NotUsed, int argc, char **argv, char **azColName) {
+  int pin;
+  int i;
+  for(i=0; i<argc; i++){
+    //		printf("%s\n", argv[i] ? argv[i] : "NULL");
+    pin = atoi(argv[i]);
+//    printf("Pin: %i\n", pin);
+  }
+
+  int pulseLength = pin == 18 ? 250 : 250;
+  char command[20] = "";
+  sprintf(command, "pigs s %i 2500 mils %i s %i 0", pin, pulseLength, pin);
+//  printf(command);
+//  printf("\n");
+//  system("pigs s 18 2500 mils 250 s 18 0");
+  system(command);
+  return 0;
+}
+
 /* Callback function for sqlite3 queries. Currently only returns values, not
 column names */
 static int
@@ -41,9 +61,8 @@ callback(void *NotUsed, int argc, char **argv, char **azColName){
   int i;
   for(i=0; i<argc; i++){
     //        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-    printf("%s\n", argv[i] ? argv[i] : "NULL");
+    printf("\n%s\n", argv[i] ? argv[i] : "NULL");
   }
-  printf("\n");
   return 0;
 }
 
@@ -54,7 +73,7 @@ getTimeElapsed(void *NotUsed, int argc, char **argv, char **azColName){
   for(i=0; i<argc; i++){
     //		printf("%s\n", argv[i] ? argv[i] : "NULL");
     timeElapsed = atoi(argv[i]);
-    printf("timeElapsed: %i\n", timeElapsed);
+//    printf("timeElapsed: %i\n", timeElapsed);
   }
   return 0;
 }
@@ -66,7 +85,7 @@ getMinFeedingInterval(void *NotUsed, int argc, char **argv, char **azColName){
   for(i=0; i<argc; i++){
     //                printf("%s\n", argv[i] ? argv[i] : "NULL");
     minFeedingInterval = atoi(argv[i]);
-    printf("minFeedingInterval: %i\n", minFeedingInterval);
+//    printf("minFeedingInterval: %i\n", minFeedingInterval);
   }
   return 0;
 }
@@ -82,22 +101,15 @@ getIDstring(const uint8_t *pbtData, const size_t szBytes, char *inString)
   int i;
 
   for (szPos = 0; szPos < szBytes; szPos++) {
-    //		printf("%d, %02x\n", pbtData[szPos], pbtData[szPos]);
     sprintf(temp, "%02x", pbtData[szPos]);
-    //		printf(temp);
-    //		printf(" ");
     strcat(returnString, temp);
-    //		printf("%s\n", returnString);
   }
-  //	printf("\nreturnString: %s\n", returnString);
-  //	printf("%.30X", pbtData[0]);
 
   for(i = 0; i < strlen(returnString) + 1; i++){
     inString[i] = returnString[i];
   }
-  //	printf("\ninString: %s\n", inString);
+
   return;
-  //	return inString;
 }
 
 // Important function to clean up the connections on the way out!
@@ -118,7 +130,7 @@ main(int argc, const char *argv[])
   // Sqlite3 parameters and initialization
   char *zErrMsg = 0;
   int rc;
-  rc = sqlite3_open("../catfeeder.db", &db);
+  rc = sqlite3_open("catfeeder.db", &db);
   if ( rc ){
     fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
     sqlite3_close(db);
@@ -171,25 +183,22 @@ main(int argc, const char *argv[])
     }
 
     if (nfc_initiator_select_passive_target(pnd, nmMifare, NULL, 0, &nt) > 0) {
-      printf("The following (NFC) ISO14443A tag was found:\n");
-      printf("    ATQA (SENS_RES): ");
-      print_hex(nt.nti.nai.abtAtqa, 2);
-      printf("       UID (NFCID%c): ", (nt.nti.nai.abtUid[0] == 0x08 ? '3' : '1'));
-      print_hex(nt.nti.nai.abtUid, nt.nti.nai.szUidLen);
-      printf("      SAK (SEL_RES): ");
-      print_hex(&nt.nti.nai.btSak, 1);
-      if (nt.nti.nai.szAtsLen) {
-        printf("          ATS (ATR): ");
-        print_hex(nt.nti.nai.abtAts, nt.nti.nai.szAtsLen);
-      }
+//      printf("The following (NFC) ISO14443A tag was found:\n");
+//      printf("    ATQA (SENS_RES): ");
+//      print_hex(nt.nti.nai.abtAtqa, 2);
+//      printf("       UID (NFCID%c): ", (nt.nti.nai.abtUid[0] == 0x08 ? '3' : '1'));
+//      print_hex(nt.nti.nai.abtUid, nt.nti.nai.szUidLen);
+//      printf("      SAK (SEL_RES): ");
+//      print_hex(&nt.nti.nai.btSak, 1);
+//      if (nt.nti.nai.szAtsLen) {
+//        printf("          ATS (ATR): ");
+//        print_hex(nt.nti.nai.abtAts, nt.nti.nai.szAtsLen);
+//      }
     }
 
     getIDstring(nt.nti.nai.abtUid, nt.nti.nai.szUidLen, uniqueID);
-    //  printf("Back in main\n");
-    //  	printf("\nuniqueID: %s\n", uniqueID);
 
     char* query = sqlite3_mprintf("SELECT name FROM identification WHERE id='%q';", uniqueID);
-    //  printf("%s\n", query);
     rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
     if( rc != SQLITE_OK ){
       fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -211,7 +220,7 @@ main(int argc, const char *argv[])
       }
 
       /* Print to stdout. */
-      (void) printf("Current time is %s\n", c_time_string);
+      (void) printf("ID: %s\nTime: %s\n\n", uniqueID, c_time_string);
 
       // Grab the minimum time interval from the database
       char* intervalQuery = sqlite3_mprintf("SELECT mintime FROM rules WHERE name IN (SELECT name FROM identification WHERE id='%q')", uniqueID);
@@ -219,15 +228,15 @@ main(int argc, const char *argv[])
 
       // Determine how many minutes have elapsed since the last dispensing entry in the table log
       char* timeQuery = sqlite3_mprintf("SELECT (strftime('%q','now') - (SELECT MAX(date_time) FROM log WHERE id='%s')) / 60", "%s", uniqueID);
-      //              printf("%s\n", timeQuery);
       rc = sqlite3_exec(db, timeQuery, getTimeElapsed, 0, &zErrMsg);
 
       if(timeElapsed >= minFeedingInterval){
         char* addToLog = sqlite3_mprintf("INSERT INTO log VALUES('%q', strftime('%s', 'now'))", uniqueID, "%s");
-        //			printf("%s\n", addToLog);
         rc = sqlite3_exec(db, addToLog, callback, 0, &zErrMsg);
-        // ADD sqlite table for food and dispenser side. Reference table to determine side to dispense, and pin.
-        system("pigs s 18 2500 mils 250 s 18 0");
+
+        char* pinQuery = sqlite3_mprintf("SELECT pin FROM rules,identification,container WHERE (id='%q' AND identification.name=rules.name AND rules.food=container.food)", uniqueID);
+        rc = sqlite3_exec(db, pinQuery, dispense, 0, &zErrMsg);
+
       }
     }
   }while (1); // end of forever loop
